@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "skills": [
+    {
+      "name": "find-nexus-version",
+      "description": "Given a vegapay-commons version, find which branch, commit, and GitHub Actions run pushed it to Nexus.",
+      "file": "skills/find-nexus-version.md",
+      "tags": ["nexus", "ci-cd", "vegapay", "maven"],
+      "requires": ["git", "gh"]
+    }
+  ],
+  "mcp-servers": [],
+  "plugins": []
+}

@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# gh marketplace — Claude Marketplace extension for gh CLI
+#
+# Install once:
+#   gh extension install nitindhawan-vegapay/claude-marketplace
+#
+# Then use from any project:
+#   gh marketplace sync                  — install everything in .claude/marketplace.json
+#   gh marketplace list                  — list all available skills/plugins
+#   gh marketplace install <skill>       — install a specific skill by name
+#   gh marketplace install skills        — install all skills
+
+set -euo pipefail
+
+MARKETPLACE_REPO="nitindhawan-vegapay/claude-marketplace"
+BRANCH="main"
+SKILLS_DEST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+MANIFEST_FILE="$(pwd)/.claude/marketplace.json"
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+green()  { printf '\033[0;32m%s\033[0m\n' "$*"; }
+yellow() { printf '\033[0;33m%s\033[0m\n' "$*"; }
+red()    { printf '\033[0;31m%s\033[0m\n' "$*"; }
+bold()   { printf '\033[1m%s\033[0m\n' "$*"; }
+
+fetch_file() {
+  local repo="$1" path="$2"
+  gh api "repos/$repo/contents/$path?ref=$BRANCH" --jq '.content' | base64 -d
+}
+
+fetch_catalog() {
+  fetch_file "$MARKETPLACE_REPO" "catalog.json"
+}
+
+install_skill() {
+  local name="$1" repo="${2:-$MARKETPLACE_REPO}"
+  mkdir -p "$SKILLS_DEST"
+  [[ -e "$SKILLS_DEST/${name}.md" ]] && yellow "  Overwriting: ${name}.md"
+  fetch_file "$repo" "skills/${name}.md" > "$SKILLS_DEST/${name}.md"
+  green "  Installed skill: /$name"
+}
+
+cmd_list() {
+  echo ""
+  bold "Available in $MARKETPLACE_REPO:"
+  echo ""
+  fetch_catalog | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+print('  Skills:')
+for s in data.get('skills', []):
+    print(f\"    /{s['name']:<28} {s.get('description','')[:60]}\")
+"
+  echo ""
+}
+
+cmd_sync() {
+  if [[ ! -f "$MANIFEST_FILE" ]]; then
+    red "No manifest found at .claude/marketplace.json"
+    echo ""
+    echo "Create it:"
+    cat <<'EOF'
+{
+  "marketplace": "nitindhawan-vegapay/claude-marketplace",
+  "skills": [
+    "find-nexus-version"
+  ]
+}
+EOF
+    exit 1
+  fi
+
+  bold "Syncing from .claude/marketplace.json"
+  echo ""
+
+  local manifest repo
+  manifest="$(cat "$MANIFEST_FILE")"
+  repo="$(echo "$manifest" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('marketplace','$MARKETPLACE_REPO'))")"
+
+  local count=0
+  while IFS= read -r name; do
+    [[ -z "$name" ]] && continue
+    install_skill "$name" "$repo"
+    ((count++))
+  done < <(echo "$manifest" | python3 -c "import sys,json; [print(s) for s in json.load(sys.stdin).get('skills',[])]")
+
+  echo ""
+  bold "Done: $count item(s) installed."
+  echo "Restart your Claude CLI session to pick up new commands."
+}
+
+cmd_init() {
+  local settings=".claude/settings.json"
+
+  mkdir -p .claude
+
+  if [[ -f "$settings" ]]; then
+    yellow "  Already exists: $settings (skipping)"
+  else
+    fetch_file "$MARKETPLACE_REPO" "templates/settings.json" > "$settings"
+    green "  Created: $settings"
+  fi
+
+  echo ""
+  bold "Project initialized."
+  echo ""
+  echo "Next step:"
+  echo "  Commit .claude/settings.json — your team gets all marketplace skills"
+  echo "  auto-installed when they open Claude Code. No setup required."
+}
+
+cmd_install() {
+  local target="${1:-}"
+  if [[ -z "$target" ]]; then
+    red "Usage: gh marketplace install <skill-name>"
+    exit 1
+  fi
+  if [[ "$target" == "skills" ]]; then
+    local count=0
+    while IFS= read -r name; do
+      [[ -z "$name" ]] && continue
+      install_skill "$name"
+      ((count++))
+    done < <(fetch_catalog | python3 -c "import sys,json; [print(s['name']) for s in json.load(sys.stdin).get('skills',[])]")
+    echo ""
+    bold "Installed $count skill(s)."
+  else
+    install_skill "$target"
+  fi
+  echo "Restart your Claude CLI session to pick up new commands."
+}
+
+# ── main ─────────────────────────────────────────────────────────────────────
+
+case "${1:-}" in
+  init)             cmd_init ;;
+  sync)             cmd_sync ;;
+  list)             cmd_list ;;
+  install)          cmd_install "${2:-}" ;;
+  *)
+    bold "gh marketplace — Claude Marketplace"
+    echo ""
+    echo "Commands:"
+    echo "  gh marketplace init               Set up .claude/ files in this project (project owners)"
+    echo "  gh marketplace sync               Install everything in .claude/marketplace.json"
+    echo "  gh marketplace list               List all available skills"
+    echo "  gh marketplace install <name>     Install a specific skill"
+    echo "  gh marketplace install skills     Install all skills"
+    echo ""
+    ;;
+esac
