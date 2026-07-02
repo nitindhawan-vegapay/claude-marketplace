@@ -7,6 +7,13 @@
       "file": "skills/find-nexus-version.md",
       "tags": ["nexus", "ci-cd", "vegapay", "maven"],
       "requires": ["git", "gh"]
+    },
+    {
+      "name": "analyze-merge-branches",
+      "description": "Read-only analysis of bank branches before a merge — produces a report.json with strategy flags, line numbers, programId resolvability, and merge-compatibility verdict.",
+      "file": "skills/analyze-merge-branches.md",
+      "tags": ["merge", "analysis", "banking", "vegapay", "strategy-flags"],
+      "requires": ["git"]
     }
   ],
   "mcp-servers": [],

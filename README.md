@@ -55,6 +55,7 @@ gh marketplace sync                         # manually re-sync from manifest
 | Command | Description | Requires |
 |---|---|---|
 | `/find-nexus-version` | Find which branch/commit/run pushed a vegapay-commons version to Nexus | `git`, `gh` |
+| `/analyze-merge-branches` | Read-only analysis of bank branches before a merge — flags, line numbers, programId resolvability, merge-compatibility verdict | `git` |
 
 ## Contributing
 
