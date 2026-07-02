@@ -10,7 +10,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_SRC="$REPO_DIR/skills"
-SKILLS_DEST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+SKILLS_DEST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/commands}"
 USE_COPY=false
 
 # Parse flags

@@ -20,7 +20,7 @@ set -euo pipefail
 
 MARKETPLACE_REPO="nitindhawan-vegapay/claude-marketplace"
 BRANCH="main"
-SKILLS_DEST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+SKILLS_DEST="${CLAUDE_SKILLS_DIR:-$HOME/.claude/commands}"
 MANIFEST_FILE="${CLAUDE_MANIFEST:-$(pwd)/.claude/marketplace.json}"
 
 # ── helpers ──────────────────────────────────────────────────────────────────
