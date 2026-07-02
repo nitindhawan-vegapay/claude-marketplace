@@ -21,7 +21,7 @@ Create `.claude/settings.json` in your project root with this content:
         "hooks": [
           {
             "type": "command",
-            "command": "MARKER=/tmp/.claude-mkt-$(date +%Y%m%d)-$(basename $PWD); [ -f \"$MARKER\" ] || (gh api repos/nitindhawan-vegapay/claude-marketplace/contents/remote-install.sh --jq '.content' | base64 -d 2>/dev/null | bash -s -- skills >/dev/null 2>&1 && touch \"$MARKER\"); exit 0"
+            "command": "MARKER=/tmp/.claude-mkt-$(date +%Y%m%d)-$(basename $PWD); [ -f \"$MARKER\" ] || (REMOTE_SHA=$(gh api repos/nitindhawan-vegapay/claude-marketplace/contents/catalog.json --jq '.sha' 2>/dev/null); LOCAL_SHA=$(cat ~/.claude/.marketplace-sha 2>/dev/null || echo ''); [ \"$REMOTE_SHA\" = \"$LOCAL_SHA\" ] || (gh api repos/nitindhawan-vegapay/claude-marketplace/contents/remote-install.sh --jq '.content' | base64 -d 2>/dev/null | bash -s -- skills >/dev/null 2>&1 && echo \"$REMOTE_SHA\" > ~/.claude/.marketplace-sha); touch \"$MARKER\"); exit 0"
           }
         ]
       }
